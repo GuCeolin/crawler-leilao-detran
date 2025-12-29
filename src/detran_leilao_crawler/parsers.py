@@ -192,7 +192,7 @@ def parse_lot_cards_from_html(html: str, auction_id: str, page_url: str) -> list
                 header_text = norm_text(header_b.get_text(" ")) if header_b else None
 
                 # Extract lot number if needed (not stored separately yet)
-                m_lote_num = re.search(r"\bLote\s*(\d+)\b", header_text or card_text, re.IGNORECASE)
+                m_lote_num = re.search(r"\bLote\s*([0-9]+[a-zA-Z0-9\-\.]*)\b", header_text or card_text, re.IGNORECASE)
 
                 # Situation is usually the second span in header line.
                 situation = None
@@ -309,7 +309,7 @@ def parse_lot_cards_from_html(html: str, auction_id: str, page_url: str) -> list
 
             requires_login = "login" in text.lower() and "obrig" in text.lower()
 
-            m = re.search(r"\bLote\s*[:#-]?\s*(\d+)\b", text, re.IGNORECASE)
+            m = re.search(r"\bLote\s*[:#-]?\s*([0-9]+[a-zA-Z0-9\-\.]*)\b", text, re.IGNORECASE)
             lot_id = m.group(1) if m else None
             if not lot_id:
                 lot_id = re.sub(r"\W+", "-", text[:60]).strip("-").lower() or "unknown"
