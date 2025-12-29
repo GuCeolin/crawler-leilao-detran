@@ -23,4 +23,5 @@ src/detran_leilao_crawler.egg-info/entry_points.txt
 src/detran_leilao_crawler.egg-info/top_level.txt
 tests/test_checkpoint.py
 tests/test_filters.py
+tests/test_parsers_lots.py
 tests/test_robots.py

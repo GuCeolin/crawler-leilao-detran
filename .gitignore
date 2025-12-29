@@ -6,3 +6,4 @@ out/
 exports/
 *.sqlite
 *.db
+relatorio_leiloes.csv
