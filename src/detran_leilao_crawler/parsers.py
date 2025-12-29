@@ -240,7 +240,10 @@ def parse_lot_cards_from_html(html: str, auction_id: str, page_url: str) -> list
 
         # Prefer the known structure for this site.
         base = page_url
-        site_cards = soup.select("div.card.listaLotes")
+        site_cards = soup.select("div.card.listaLotes, div.card[id]")
+        # De-dup by element identity (in case an element matches both selectors)
+        site_cards = list(dict.fromkeys(site_cards))
+
         if site_cards:
             for card in site_cards:
                 card_text = norm_text(card.get_text(" "))
