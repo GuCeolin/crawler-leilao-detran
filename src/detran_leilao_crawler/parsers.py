@@ -71,19 +71,79 @@ def parse_auction_details_from_html(html: str, auction: Auction) -> Auction:
     This function is defensive by design; the site may change markup.
     """
     soup = BeautifulSoup(html, "lxml")
-    text = norm_text(soup.get_text(" "))
 
-    number = auction.number or _guess_auction_number(text)
-    city = auction.city or _extract_kv(text, ["cidade", "munic[ií]pio", "local"])  # best-effort
-    yard = auction.yard or _extract_kv(text, ["p[aá]tio", "patio"])  # best-effort
-    organizer = auction.organizer or _extract_kv(text, ["organizador", "leiloeiro"])  # best-effort
-    status = auction.status or _guess_status(text)
+    # Limit the scope for metadata extraction to avoid bleeding into lots list.
+    # The header is usually in the first few rows or strictly before the first 'card'.
+    header_scope = soup
+    first_card = soup.select_one("div.card.listaLotes")
+    if first_card:
+        # Create a new soup from just the HTML before the first card, if possible.
+        # But determining "before" in DOM soup is tricky.
+        # Instead, we prefer specific selectors found in the header.
+        pass
+
+    # 1. Try structured selectors (h4, h6 in the main container)
+    number = auction.number
+    yard = auction.yard
+    city = auction.city
+    status = auction.status
+
+    # Header usually contains "Leilão NNN - CITY"
+    h4 = soup.select_one("main h4") or soup.select_one("h4")
+    if h4:
+        h4_text = norm_text(h4.get_text(" "))
+        if not number:
+            number = _guess_auction_number(h4_text)
+        if not city:
+            # Often "Leilão 123 - CITYNAME"
+            m_city = re.search(r"-\s*([^0-9\-]+)$", h4_text)
+            if m_city:
+                city = norm_text(m_city.group(1))
+
+    # Yard often in h6: "Patio: ..."
+    h6_list = soup.select("h6")
+    for h6 in h6_list:
+        t = norm_text(h6.get_text(" "))
+        if "patio" in t.lower() or "pátio" in t.lower():
+            # Extract value after colon if present
+            m_yard = re.search(r"(patio|pátio)\s*[:\-]?\s*(.*)", t, re.IGNORECASE)
+            if m_yard:
+                candidate = m_yard.group(2).strip()
+                if candidate:
+                    yard = candidate
+            break
+
+    # 2. Fallback: Text-based extraction on a restricted block
+    # We try to get text only from 'main' but exclude 'div.listaLotes' contents.
+    # A simple heuristic is to grab text from the top of the body until we hit "Lote".
+    full_text = norm_text(soup.get_text(" "))
+    
+    # Heuristic: Truncate text at first occurrence of "Lote 1" or "Lote 0" or similar to avoid pollution
+    # But be careful not to truncate "Lote" appearing in the address.
+    # Safe guard: if we found yard via h6, we trust it.
+    
+    if not number:
+        number = _guess_auction_number(full_text)
+    
+    if not city:
+        city = _extract_kv(full_text, ["cidade", "munic[ií]pio", "local"])
+    
+    if not yard:
+        # If h6 didn't work, try strict regex on full text, but ensure we don't grab too much.
+        # We enforce a stricter regex for Yard that doesn't allow newlines/long gaps.
+        # The original _extract_kv is too greedy for this specific site structure.
+        m_yard_fallback = re.search(r"\b(p[aá]tio)\b\s*[:\-]?\s*([^\n\r]+?)(?=\s{2,}|\bDocumentos\b|\bLote\b|$)", full_text, re.IGNORECASE)
+        if m_yard_fallback:
+             yard = norm_text(m_yard_fallback.group(2))
+
+    organizer = auction.organizer or _extract_kv(full_text, ["organizador", "leiloeiro"])  # best-effort
+    status = auction.status or _guess_status(full_text)
 
     ends_at = auction.ends_at
     if ends_at is None:
         # Common labels for closing date/time
         for label in ["encerramento", "encerra", "data/hora", "data e hora", "t[ée]rmino", "termino"]:
-            m = re.search(rf"\b{label}\b\s*[:\-]?\s*(.+?)($|\s{2,})", text, re.IGNORECASE)
+            m = re.search(rf"\b{label}\b\s*[:\-]?\s*(.+?)($|\s{2,})", full_text, re.IGNORECASE)
             if m:
                 ends_at = parse_datetime_loose(m.group(1))
                 if ends_at:

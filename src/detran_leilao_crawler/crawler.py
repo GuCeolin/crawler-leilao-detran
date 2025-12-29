@@ -378,11 +378,20 @@ class DetranLeilaoCrawler:
                 if not clicked:
                     # Try next arrow
                     try:
+                        # 1. Try generic text-based "Next"
                         nxt = page.get_by_role("link", name=re.compile(r"próx|next|>+", re.IGNORECASE))
                         if nxt.count() > 0:
                             self.rate_limiter.wait()
                             nxt.first.click(timeout=2500)
                             clicked = True
+                        else:
+                            # 2. Try icon-based "Next" (common in Detran/Bootstrap)
+                            # Looking for <i> inside an <a> that is NOT inside a .disabled li
+                            arrow = page.locator("li.page-item:not(.disabled) a i.fa-chevron-right, li.page-item:not(.disabled) a i.fa-angle-right")
+                            if arrow.count() > 0:
+                                self.rate_limiter.wait()
+                                arrow.first.click(timeout=2500)
+                                clicked = True
                     except Exception:
                         clicked = False
 
