@@ -1,0 +1,2 @@
+[console_scripts]
+detran-leilao-crawler = detran_leilao_crawler.cli:main

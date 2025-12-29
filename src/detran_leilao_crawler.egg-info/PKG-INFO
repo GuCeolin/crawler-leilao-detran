@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: detran-leilao-crawler
+Version: 0.1.0
+Summary: Ethical crawler for public DETRAN-MG auction listings
+Requires-Python: >=3.11

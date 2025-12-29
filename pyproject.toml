@@ -1,0 +1,23 @@
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "detran-leilao-crawler"
+version = "0.1.0"
+description = "Ethical crawler for public DETRAN-MG auction listings"
+requires-python = ">=3.11"
+
+[project.scripts]
+detran-leilao-crawler = "detran_leilao_crawler.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

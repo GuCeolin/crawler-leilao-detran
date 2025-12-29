@@ -1,0 +1,29 @@
+# Exemplo de filtros. Ajuste conforme necessário.
+# Observação: campos ausentes no lote não bloqueiam por padrão, a menos que a regra exija explicitamente.
+
+ignore_requires_login: true
+ignore_sucata: true
+
+# carro | moto | null (não filtra)
+tipo_veiculo: null
+
+# Lista de marcas permitidas (case-insensitive). Null/[] = não filtra.
+marcas_permitidas:
+  - Honda
+  - Yamaha
+  - VW
+
+ano_min: 2010
+ano_max: 2025
+
+# Valor máximo (se o lance inicial for público). Null = não filtra.
+valor_max: 30000
+
+# Palavras-chave (todas devem aparecer) na descrição (case-insensitive)
+descricao_keywords_all:
+  - "sem sinistro"
+
+# Palavras-chave (qualquer pode aparecer)
+descricao_keywords_any:
+  - "único dono"
+  - "revisado"
